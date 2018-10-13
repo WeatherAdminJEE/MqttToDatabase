@@ -11,7 +11,7 @@ public class main {
     public static void main(String[] args) throws IOException {
         Connection conn = null;
 
-        BufferedReader br = new BufferedReader(new FileReader("foo.config.example"));
+        BufferedReader br = new BufferedReader(new FileReader("foo.config"));
         String jdbcURL = br.readLine();
         System.out.println(jdbcURL);
         String bddUser = br.readLine();

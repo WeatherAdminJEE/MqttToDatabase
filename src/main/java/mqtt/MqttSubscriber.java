@@ -1,6 +1,7 @@
 package mqtt;
 import objectaopejrhhoperg.DataHandler;
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
 /**
  * this minimalist class is used to listen remote mqtt broker,
@@ -14,7 +15,9 @@ DataHandler dataHandler;
 
 public MqttSubscriber(String brokerURL, String topic, DataHandler dataHandler){
     try {
-        subscriber = new MqttClient(brokerURL, "Sub1");
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        MqttDefaultFilePersistence dataStore = new MqttDefaultFilePersistence(tmpDir);
+        subscriber = new MqttClient(brokerURL, "Sub1", dataStore);
         subscriber.connect();
         subscriber.setCallback(this);
         subscriber.subscribe(topic);
