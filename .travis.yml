@@ -1,0 +1,6 @@
+language: java
+jdk: oraclejdk8
+
+script:
+  - mvn install
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=cedricg44-github -Dsonar.login=420e76b14840bcdbde5f211269db337969576cbf -Dsonar.branch=master
