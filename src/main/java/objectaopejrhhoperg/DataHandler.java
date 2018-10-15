@@ -1,14 +1,22 @@
 package objectaopejrhhoperg;
 
-import imt.org.web.commonmodel.SensorData;
+import imt.org.web.commonmodel.entities.SensorDataEntity;
+import imt.org.web.commonmodel.model.SensorData;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import java.io.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class DataHandler implements  Runnable{
+public class DataHandler implements Runnable {
 
-    BlockingQueue<byte[]> queue;
+    private static final EntityManagerFactory ENTITY_MANAGER_FACTORY = Persistence
+            .createEntityManagerFactory("WeatherDatabase");
+    private EntityManager manager = ENTITY_MANAGER_FACTORY.createEntityManager();
+    private BlockingQueue<byte[]> queue;
 
     public DataHandler(){
         queue = new ArrayBlockingQueue<byte[]>(50);
@@ -25,6 +33,7 @@ public class DataHandler implements  Runnable{
         SensorData sd = null;
 
              sd = (SensorData) ois.readObject();
+             insertInto(sd);
 
             System.out.println("date : "+sd.getDate());
             //@TODO store deserialise object into database
@@ -34,10 +43,7 @@ public class DataHandler implements  Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
-
 
     public void run() {
         while (true){
@@ -47,7 +53,29 @@ public class DataHandler implements  Runnable{
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+    }
 
+    public void insertInto(SensorData sensorData) {
+        EntityTransaction transaction = null;
+        try {
+            transaction = manager.getTransaction();
+            transaction.begin();
+
+            SensorDataEntity sensorDataEntity = new SensorDataEntity(
+                sensorData.getIdSensor()+20+(int)Math.round(Math.random()*10),
+                sensorData.getIdCountry(),
+                sensorData.getIdCity(),
+                sensorData.getGpsCoordinates(),
+                Integer.parseInt(sensorData.getMeasureType().getValue()),
+                sensorData.getMeasureValue(),
+                sensorData.getDate()
+            );
+
+            manager.persist(sensorDataEntity);
+            transaction.commit();
+        } catch (Exception ex) {
+            System.out.println("INSERT INTO error - " + ex.getMessage());
         }
     }
 }
