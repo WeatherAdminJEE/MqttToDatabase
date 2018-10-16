@@ -6,6 +6,7 @@
         <!-- Persistence provider -->
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <!-- Entity classes -->
+        <class>imt.org.web.commonmodel.entities.SensorEntity</class>
         <class>imt.org.web.commonmodel.entities.SensorDataEntity</class>
         <class>imt.org.web.commonmodel.entities.MeasureTypeEntity</class>
         <properties>

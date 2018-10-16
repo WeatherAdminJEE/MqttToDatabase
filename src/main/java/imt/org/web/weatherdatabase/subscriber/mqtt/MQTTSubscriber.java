@@ -1,6 +1,8 @@
 package imt.org.web.weatherdatabase.subscriber.mqtt;
 
 import imt.org.web.weatherdatabase.datahandler.DataHandler;
+import imt.org.web.weatherdatabase.main.Main;
+
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
@@ -38,9 +40,9 @@ public class MQTTSubscriber implements MqttCallback{
             subscriber.connect(connectOptions);
             subscriber.setCallback(this);
             subscriber.subscribe(topic);
+            Main.log.debug("MQTTSubscriber() - Successfully created MQTTSubscriber");
         } catch (MqttException e) {
-            System.out.println("MQTTSubscriber() - Unable to set up client : " + e.getMessage());
-            System.exit(1);
+            Main.log.error("MQTTSubscriber() - Unable to set up client : " + e.getMessage());
         }
     }
 
@@ -54,6 +56,7 @@ public class MQTTSubscriber implements MqttCallback{
         brokerUrl = protocol + url + ":" + port;
         cleanSession = false;
         topic = CONFIG.getString("MQTTTopic");
+        Main.log.debug("initMQTTSubscriber() - Configuration OK");
     }
 
     /**
@@ -61,7 +64,12 @@ public class MQTTSubscriber implements MqttCallback{
      */
     public void connectionLost(Throwable cause) {
         // Called when the connection to the server has been lost.
-        System.out.println("connectionLost() - Connection lost : " + cause);
+        Main.log.error("connectionLost() - Connection lost - " + cause);
+        try {
+            subscriber.connect(connectOptions);
+        } catch (MqttException e) {
+            Main.log.error("connectionLost() - Unable to reconnect broker - " + e.getMessage());
+        }
     }
 
     /**
@@ -75,7 +83,7 @@ public class MQTTSubscriber implements MqttCallback{
      * @see MqttCallback#messageArrived(String, MqttMessage)
      */
     public void messageArrived(String topic, MqttMessage message) {
-        System.out.println("messageArrived() - Message arrive on topic " + topic +" : " + message);
+        Main.log.info("messageArrived() - Message arrive on topic " + topic);
         dataHandler.addMessageInQueue(message.getPayload());
     }
 }
