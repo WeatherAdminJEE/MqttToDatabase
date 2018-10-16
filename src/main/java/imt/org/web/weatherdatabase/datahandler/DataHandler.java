@@ -7,28 +7,21 @@ import imt.org.web.weatherdatabase.main.Main;
 
 import javax.persistence.*;
 import java.io.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
+/**
+ * DataHandler class
+ */
 public class DataHandler implements Runnable {
 
     private static final EntityManagerFactory ENTITY_MANAGER_FACTORY = Persistence
             .createEntityManagerFactory("WeatherDatabase");
-    private BlockingQueue<byte[]> queue;
+    private byte[] message;
 
     /**
      * Constructor
      */
-    public DataHandler() {
-        queue = new ArrayBlockingQueue<byte[]>(100);
-    }
-
-    /**
-     * Add a received message in the blocking queue
-     * @param message Received message
-     */
-    public void addMessageInQueue(byte[] message) {
-        queue.add(message);
+    public DataHandler(byte[] message) {
+        this.message = message;
     }
 
     /**
@@ -39,8 +32,8 @@ public class DataHandler implements Runnable {
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(message);
             ObjectInputStream ois = new ObjectInputStream(bais);
-            SensorData sd = (SensorData)ois.readObject();
-            saveSensorData(sd);
+            SensorData sensorData = (SensorData)ois.readObject();
+            saveSensorData(sensorData);
         } catch (ClassNotFoundException e) {
             Main.log.info("handleMessage() - Cannot found requested class - " + e.getMessage());
             return;
@@ -50,19 +43,12 @@ public class DataHandler implements Runnable {
     }
 
     /**
-     *
+     * Run thread
      */
     @Override
     public void run() {
         Main.log.debug("run() - Starting thread...");
-        while (true){
-            try {
-                byte[] message = queue.take();
-                handleMessage(message);
-            } catch (InterruptedException e) {
-                Main.log.error("run() - Thread interrupted - " + e.getMessage());
-            }
-        }
+        handleMessage(message);
     }
 
     /**
@@ -100,14 +86,13 @@ public class DataHandler implements Runnable {
                 sensorData.getDate()
             );
 
-
             manager.merge(sensorDataEntity);
             transaction.commit();
             Main.log.debug("saveSensorData() - SensorEntity added !\n" + sensorDataEntity);
         } catch (PersistenceException hibernateEx) {
             if (transaction != null) {
                 transaction.rollback();
-                Main.log.debug("saveSensorData() - Action rollback !\n" + hibernateEx.getMessage());
+                Main.log.debug("saveSensorData() - Action rollback - " + hibernateEx.getMessage());
             }
         } finally {
             manager.close();

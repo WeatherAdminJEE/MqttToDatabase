@@ -7,15 +7,17 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * MQTT Publisher class
  */
 public class MQTTSubscriber implements MqttCallback{
 
+    private ExecutorService threadPool;
     private MqttClient subscriber;
     private MqttConnectOptions connectOptions;
-    private DataHandler dataHandler;
     private String brokerUrl;
     private String topic;
     private boolean cleanSession;
@@ -23,8 +25,8 @@ public class MQTTSubscriber implements MqttCallback{
     // Config file
     public static final ResourceBundle CONFIG = ResourceBundle.getBundle("config");
 
-    public MQTTSubscriber(DataHandler dataHandler) {
-        this.dataHandler = dataHandler;
+    public MQTTSubscriber() {
+        threadPool = Executors.newFixedThreadPool(50);
         initMQTTSubscriber();
 
         // Temp directory
@@ -62,6 +64,7 @@ public class MQTTSubscriber implements MqttCallback{
     /**
      * @see MqttCallback#connectionLost(Throwable)
      */
+    @Override
     public void connectionLost(Throwable cause) {
         // Called when the connection to the server has been lost.
         Main.log.error("connectionLost() - Connection lost - " + cause);
@@ -75,6 +78,7 @@ public class MQTTSubscriber implements MqttCallback{
     /**
      * @see MqttCallback#deliveryComplete(IMqttDeliveryToken)
      */
+    @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
         // Unused - Called when a message has been delivered to the server
     }
@@ -82,8 +86,9 @@ public class MQTTSubscriber implements MqttCallback{
     /**
      * @see MqttCallback#messageArrived(String, MqttMessage)
      */
+    @Override
     public void messageArrived(String topic, MqttMessage message) {
-        Main.log.info("messageArrived() - Message arrive on topic " + topic);
-        dataHandler.addMessageInQueue(message.getPayload());
+        Main.log.debug("messageArrived() - Message arrive on topic " + topic);
+        threadPool.execute(new DataHandler(message.getPayload()));
     }
 }
