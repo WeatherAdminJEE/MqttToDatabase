@@ -1,4 +1,4 @@
-package objectaopejrhhoperg;
+package imt.org.web.weatherdatabase.datahandler;
 
 import imt.org.web.commonmodel.entities.SensorDataEntity;
 import imt.org.web.commonmodel.model.SensorData;
@@ -28,12 +28,10 @@ public class DataHandler implements Runnable {
 
     public void handlingMessage (byte[] message) {
         try {
-        ByteArrayInputStream bais = new ByteArrayInputStream(message);
-        ObjectInputStream ois = new ObjectInputStream(bais);
-        SensorData sd = null;
-
-             sd = (SensorData) ois.readObject();
-             insertInto(sd);
+            ByteArrayInputStream bais = new ByteArrayInputStream(message);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            SensorData sd = (SensorData)ois.readObject();
+            insertInto(sd);
 
             System.out.println("date : "+sd.getDate());
             //@TODO store deserialise object into database

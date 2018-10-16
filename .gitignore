@@ -31,3 +31,4 @@ target/
 
 # Config Files 
 *.config
+persistence.xml
