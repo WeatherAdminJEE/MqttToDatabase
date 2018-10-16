@@ -63,13 +63,13 @@ public class DataHandler implements Runnable {
             transaction.begin();
 
             SensorDataEntity sensorDataEntity = new SensorDataEntity(
-                sensorData.getIdSensor()+20+(int)Math.round(Math.random()*10),
-                sensorData.getIdCountry(),
-                sensorData.getIdCity(),
-                sensorData.getGpsCoordinates(),
-                Integer.parseInt(sensorData.getMeasureType().getValue()),
-                sensorData.getMeasureValue(),
-                sensorData.getDate()
+                    sensorData.getIdSensor(),
+                    sensorData.getIdCountry(),
+                    sensorData.getIdCity(),
+                    sensorData.getGpsCoordinates(),
+                    Integer.parseInt(sensorData.getMeasureType().getValue()),
+                    sensorData.getMeasureValue(),
+                    sensorData.getDate()
             );
 
             manager.persist(sensorDataEntity);
