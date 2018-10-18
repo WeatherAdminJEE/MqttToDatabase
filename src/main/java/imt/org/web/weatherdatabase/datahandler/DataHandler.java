@@ -35,8 +35,7 @@ public class DataHandler implements Runnable {
             SensorData sensorData = (SensorData)ois.readObject();
             saveSensorData(sensorData);
         } catch (ClassNotFoundException e) {
-            Main.log.info("handleMessage() - Cannot found requested class - " + e.getMessage());
-            return;
+            Main.log.error("handleMessage() - Cannot found requested class - " + e.getMessage());
         } catch (IOException e) {
             Main.log.error("handleMessage() - Unable to deserialize object - " + e.getMessage());
         }
