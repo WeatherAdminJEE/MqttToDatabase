@@ -67,7 +67,10 @@ public class DataHandler implements Runnable {
                 // If not, register the new sensor
                 SensorEntity sensorEntity = new SensorEntity(
                     sensorData.getIdSensor(),
-                    "Sensor" + sensorData.getIdSensor()
+                    "Sensor" + sensorData.getIdSensor(),
+                    sensorData.getIdCountry(),
+                    sensorData.getIdCity(),
+                    sensorData.getGpsCoordinates()
                 );
                 manager.merge(sensorEntity);
                 Main.log.debug("saveSensorData() - Sensor " + sensorData.getIdSensor() + " added !");
@@ -77,9 +80,6 @@ public class DataHandler implements Runnable {
             // Create entity from MQTT received data
             SensorDataEntity sensorDataEntity = new SensorDataEntity(
                 sensorData.getIdSensor(),
-                sensorData.getIdCountry(),
-                sensorData.getIdCity(),
-                sensorData.getGpsCoordinates(),
                 Integer.parseInt(sensorData.getMeasureType().getValue()),
                 sensorData.getMeasureValue(),
                 sensorData.getDate()
