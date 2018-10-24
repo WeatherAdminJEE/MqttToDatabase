@@ -1,6 +1,7 @@
 package imt.org.web.weatherdatabase.crud;
 
 import imt.org.web.weatherdatabase.crud.facade.IEntityFacade;
+import imt.org.web.weatherdatabase.main.Main;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -26,20 +27,20 @@ public class CRUDEntityFacade<T> implements IEntityFacade<T> {
         try {
             transaction = manager.getTransaction();
             transaction.begin();
-            System.out.println("CRUD facade - create() - Begin transaction");
+            Main.log.debug("CRUD facade - create() - Begin transaction");
 
             manager.persist(entity);
             transaction.commit();
-            System.out.println("CRUD facade - create() - Transaction success");
+            Main.log.debug("CRUD facade - create() - Transaction success");
         } catch (PersistenceException hibernateEx) {
-            System.out.println("CRUD facade - create() - Insert error - " + hibernateEx.getMessage());
+            Main.log.debug("CRUD facade - create() - Insert error - " + hibernateEx.getMessage());
             if (transaction != null) {
                 transaction.rollback();
-                System.out.println("CRUD facade - create() - Action rollback !\n" + hibernateEx.getMessage());
+                Main.log.debug("CRUD facade - create() - Action rollback !\n" + hibernateEx.getMessage());
             }
         } finally {
             manager.close();
-            System.out.println("CRUD facade - create() - EntityManager closed");
+            Main.log.debug("CRUD facade - create() - EntityManager closed");
         }
     }
 
@@ -55,15 +56,15 @@ public class CRUDEntityFacade<T> implements IEntityFacade<T> {
         T entities = null;
 
         try {
-            System.out.println("CRUD facade - read() - Begin read");
+            Main.log.debug("CRUD facade - read() - Begin read");
             entities = manager.find(entity, primaryKey);
-            System.out.println("CRUD facade - read() - Read success");
+            Main.log.debug("CRUD facade - read() - Read success");
         } catch (PersistenceException hibernateEx) {
-            System.out.println("CRUD facade - read() - Read error - " + hibernateEx.getMessage());
+            Main.log.debug("CRUD facade - read() - Read error - " + hibernateEx.getMessage());
 
         } finally {
             manager.close();
-            System.out.println("CRUD facade - read() - EntityManager closed");
+            Main.log.debug("CRUD facade - read() - EntityManager closed");
             return entities;
         }
     }
