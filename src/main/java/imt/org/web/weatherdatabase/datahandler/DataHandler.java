@@ -1,5 +1,6 @@
 package imt.org.web.weatherdatabase.datahandler;
 
+import imt.org.web.commonmodel.entities.SensorAlertParamEntity;
 import imt.org.web.commonmodel.entities.SensorDataEntity;
 import imt.org.web.commonmodel.entities.SensorEntity;
 import imt.org.web.commonmodel.model.SensorData;
@@ -7,6 +8,7 @@ import imt.org.web.weatherdatabase.main.Main;
 
 import javax.persistence.*;
 import java.io.*;
+import java.sql.Timestamp;
 
 /**
  * DataHandler class
@@ -57,41 +59,37 @@ public class DataHandler implements Runnable {
     public void saveSensorData(SensorData sensorData) {
         EntityManager manager = ENTITY_MANAGER_FACTORY.createEntityManager();
         EntityTransaction transaction = null;
+
         try {
             transaction = manager.getTransaction();
             transaction.begin();
             Main.log.debug("saveSensorData() - Begin transaction");
 
             // Check if the sensor exists
-            if(!sensorAlreadyExists(sensorData.getIdSensor())) {
-                // If not, register the new sensor
-                SensorEntity sensorEntity = new SensorEntity(
-                    sensorData.getIdSensor(),
-                    "Sensor" + sensorData.getIdSensor(),
-                    sensorData.getIdCountry(),
-                    sensorData.getIdCity(),
-                    sensorData.getGpsCoordinates()
-                );
-                manager.merge(sensorEntity);
+            SensorEntity sensorEntity = sensorAlreadyExists(sensorData.getIdSensor());
+            if(sensorEntity == null) {
+                // Default sensor alert
+                SensorAlertParamEntity sensorAlertParamEntity = saveDefaultSensorAlertParam();
+                sensorEntity = saveSensor(sensorData, sensorAlertParamEntity);
                 Main.log.debug("saveSensorData() - Sensor " + sensorData.getIdSensor() + " added !");
+            } else {
+                Main.log.debug("saveSensorData() - Sensor " + sensorData.getIdSensor() + " already exists");
             }
-            Main.log.debug("saveSensorData() - Sensor " + sensorData.getIdSensor() + " already exists");
 
-            // Create entity from MQTT received data
             SensorDataEntity sensorDataEntity = new SensorDataEntity(
-                sensorData.getIdSensor(),
-                Integer.parseInt(sensorData.getMeasureType().getValue()),
-                sensorData.getMeasureValue(),
-                sensorData.getDate()
+                    sensorEntity,
+                    sensorData.getMeasureValue(),
+                    sensorData.getDate()
             );
 
             manager.merge(sensorDataEntity);
             transaction.commit();
-            Main.log.debug("saveSensorData() - SensorEntity added !\n" + sensorDataEntity);
+            Main.log.debug("saveSensorData() - Transaction success");
         } catch (PersistenceException hibernateEx) {
+            Main.log.debug("saveSensorData() - Insert error - " + hibernateEx.getMessage());
             if (transaction != null) {
                 transaction.rollback();
-                Main.log.debug("saveSensorData() - Action rollback - " + hibernateEx.getMessage());
+                Main.log.debug("saveSensorData() - Action rollback !\n" + hibernateEx.getMessage());
             }
         } finally {
             manager.close();
@@ -102,13 +100,85 @@ public class DataHandler implements Runnable {
     /**
      * Check if a sensor is already registered in DB
      * @param idSensor Sensor ID
-     * @return Sensor already exists ? True : False
+     * @return The sensor if it exists
      */
-    public boolean sensorAlreadyExists(int idSensor) {
+    public SensorEntity sensorAlreadyExists(int idSensor) {
         EntityManager manager = ENTITY_MANAGER_FACTORY.createEntityManager();
-        boolean sensorExists = !manager.createQuery("from SensorEntity where idSensor=:idSensor")
-                .setParameter("idSensor", idSensor).getResultList().isEmpty();
+        SensorEntity sensor = manager.find(SensorEntity.class, idSensor);
         manager.close();
-        return sensorExists;
+        return sensor;
+    }
+
+    /**
+     * Insert new sensor default alert parameters
+     * @return New SensorAlertParamEntity
+     */
+    public SensorAlertParamEntity saveDefaultSensorAlertParam() {
+        EntityManager manager = ENTITY_MANAGER_FACTORY.createEntityManager();
+        EntityTransaction transaction = null;
+        SensorAlertParamEntity sensorAlertParamEntity = null;
+
+        try {
+            transaction = manager.getTransaction();
+            transaction.begin();
+            Main.log.debug("saveDefaultSensorAlertParam() - Begin transaction");
+
+            sensorAlertParamEntity = new SensorAlertParamEntity(10000.0, new Timestamp(0));
+            manager.persist(sensorAlertParamEntity);
+            manager.merge(sensorAlertParamEntity);
+            transaction.commit();
+            Main.log.debug("saveDefaultSensorAlertParam() - Transaction success");
+        } catch (PersistenceException hibernateEx) {
+            Main.log.debug("saveDefaultSensorAlertParam() - Insert error - " + hibernateEx.getMessage());
+            if (transaction != null) {
+                transaction.rollback();
+                Main.log.debug("saveDefaultSensorAlertParam() - Action rollback !\n" + hibernateEx.getMessage());
+            }
+        } finally {
+            manager.close();
+            Main.log.debug("saveDefaultSensorAlertParam() - EntityManager closed");
+            return sensorAlertParamEntity;
+        }
+    }
+
+    /**
+     * Insert new sensor
+     * @param sensorData SensorData
+     * @param sensorAlertParamEntity SensorAlertParamEntity
+     * @return New SensorEntity
+     */
+    public SensorEntity saveSensor(SensorData sensorData, SensorAlertParamEntity sensorAlertParamEntity) {
+        EntityManager manager = ENTITY_MANAGER_FACTORY.createEntityManager();
+        EntityTransaction transaction = null;
+        SensorEntity sensorEntity = null;
+
+        try {
+            transaction = manager.getTransaction();
+            transaction.begin();
+            Main.log.debug("saveSensor() - Begin transaction");
+
+            sensorEntity = new SensorEntity(
+                    sensorData.getIdSensor(),
+                    "Sensor" + sensorData.getIdSensor(),
+                    sensorData.getIdCountry(),
+                    sensorData.getIdCity(),
+                    sensorData.getGpsCoordinates(),
+                    sensorData.getMeasureType(),
+                    sensorAlertParamEntity
+            );
+            manager.merge(sensorEntity);
+            transaction.commit();
+            Main.log.debug("saveSensor() - Transaction success");
+        } catch (PersistenceException hibernateEx) {
+            Main.log.debug("saveSensor() - Insert error - " + hibernateEx.getMessage());
+            if (transaction != null) {
+                transaction.rollback();
+                Main.log.debug("saveSensor() - Action rollback !\n" + hibernateEx.getMessage());
+            }
+        } finally {
+            manager.close();
+            Main.log.debug("saveSensor() - EntityManager closed");
+            return sensorEntity;
+        }
     }
 }
