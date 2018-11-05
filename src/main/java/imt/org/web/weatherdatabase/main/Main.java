@@ -13,6 +13,7 @@ public class Main {
     public static final IEntityFacade crudEntityFacade = new CRUDEntityFacade();
 
     public static void main(String[] args) {
+
         PropertyConfigurator.configure("log4j.properties");
         new MQTTSubscriber();
     }
